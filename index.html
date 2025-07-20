@@ -3,302 +3,835 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Money Dashboard</title>
+    <title>My Australian Financial Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        /* This is CSS - it makes everything look pretty! */
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        h1 {
-            color: #333;
             text-align: center;
-            margin-bottom: 30px;
         }
 
-        .money-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
             margin-bottom: 20px;
-            border-left: 5px solid #28a745;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .summary-card {
+            grid-column: span 3;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bank-connection {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .connect-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .connect-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .connected {
+            background: rgba(46, 204, 113, 0.2) !important;
+            border-color: #2ecc71 !important;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .positive { color: #27ae60; font-weight: bold; }
+        .negative { color: #e74c3c; font-weight: bold; }
+        .neutral { color: #3498db; font-weight: bold; }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
         }
 
         .input-group {
             margin-bottom: 15px;
         }
 
-        label {
+        .input-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
-            color: #555;
+            color: #2c3e50;
         }
 
-        input {
+        .input-group input,
+        .input-group select {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
         }
 
-        input:focus {
-            border-color: #007bff;
+        .input-group input:focus,
+        .input-group select:focus {
             outline: none;
+            border-color: #3498db;
         }
 
-        button {
-            background: #28a745;
+        .btn {
+            background: #3498db;
             color: white;
-            padding: 12px 25px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 8px;
             cursor: pointer;
-            margin: 10px 5px;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s ease;
         }
 
-        button:hover {
-            background: #218838;
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
         }
 
-        .summary-box {
-            background: #e9ecef;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            text-align: center;
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #229954; }
+
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
         }
 
-        .money-amount {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 10px 0;
+        .status-connected { background: #27ae60; }
+        .status-disconnected { background: #e74c3c; }
+        .status-pending { background: #f39c12; }
+
+        .cdr-info {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
         }
 
-        .positive { color: #28a745; }
-        .negative { color: #dc3545; }
-        .neutral { color: #007bff; }
-
-        .transaction-list {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 15px;
-        }
-
-        .transaction-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .transaction-item:last-child {
-            border-bottom: none;
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            .summary-card {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>💰 My Money Dashboard</h1>
-        
-        <!-- This is where you add money coming IN (like allowance) -->
-        <div class="money-section">
-            <h2>💵 Money Coming In (Income)</h2>
-            <div class="input-group">
-                <label for="income-description">What is this money from?</label>
-                <input type="text" id="income-description" placeholder="Like: Salary, Birthday money, Side job">
-            </div>
-            <div class="input-group">
-                <label for="income-amount">How much money?</label>
-                <input type="number" id="income-amount" placeholder="100" step="0.01">
-            </div>
-            <button onclick="addIncome()">Add This Money! 💰</button>
+        <!-- Header -->
+        <div class="header">
+            <h1>🇦🇺 My Financial Dashboard</h1>
+            <div class="subtitle">Powered by Australia's Consumer Data Right (CDR) - Open Banking</div>
         </div>
 
-        <!-- This is where you add money going OUT (like buying toys) -->
-        <div class="money-section" style="border-left-color: #dc3545;">
-            <h2>💸 Money Going Out (Expenses)</h2>
-            <div class="input-group">
-                <label for="expense-description">What did you spend on?</label>
-                <input type="text" id="expense-description" placeholder="Like: Groceries, Gas, Netflix">
-            </div>
-            <div class="input-group">
-                <label for="expense-amount">How much did you spend?</label>
-                <input type="number" id="expense-amount" placeholder="50" step="0.01">
-            </div>
-            <button onclick="addExpense()" style="background: #dc3545;">Add This Expense! 💸</button>
-        </div>
-
-        <!-- This shows your money summary (like counting all your coins) -->
-        <div class="summary-box">
-            <h2>📊 Your Money Summary</h2>
-            <div>Total Money Coming In: <span id="total-income" class="money-amount positive">$0.00</span></div>
-            <div>Total Money Going Out: <span id="total-expenses" class="money-amount negative">$0.00</span></div>
-            <div>Money Left Over: <span id="net-total" class="money-amount neutral">$0.00</span></div>
-        </div>
-
-        <!-- This shows your list of all money movements -->
-        <div class="money-section">
-            <h2>📝 All Your Money Moves</h2>
-            <div class="transaction-list" id="transaction-list">
-                <div style="padding: 20px; text-align: center; color: #888;">
-                    Start adding your income and expenses above to see them here!
+        <div class="dashboard-grid">
+            <!-- Financial Summary -->
+            <div class="card summary-card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div class="card-title">Financial Overview</div>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-value" id="total-assets">$0.00</div>
+                        <div class="summary-label">Total Assets</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value" id="total-liabilities">$0.00</div>
+                        <div class="summary-label">Total Liabilities</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value" id="net-worth">$0.00</div>
+                        <div class="summary-label">Net Worth</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value" id="monthly-cashflow">$0.00</div>
+                        <div class="summary-label">Monthly Cash Flow</div>
+                    </div>
                 </div>
             </div>
-            <button onclick="clearAll()" style="background: #6c757d; margin-top: 10px;">Clear Everything 🗑️</button>
+
+            <!-- CDR Bank Connection -->
+            <div class="card bank-connection">
+                <div class="card-header">
+                    <div class="card-icon">🏦</div>
+                    <div class="card-title">Connect Your Banks</div>
+                </div>
+                <div class="cdr-info">
+                    <strong>🔒 Secure CDR Connection:</strong> Your data is protected by Australian Privacy Laws and CDR regulations.
+                </div>
+                
+                <div class="bank-list">
+                    <button class="connect-btn" onclick="connectBank('cba')">
+                        <span class="status-indicator status-disconnected"></span>
+                        Commonwealth Bank
+                    </button>
+                    <button class="connect-btn" onclick="connectBank('anz')">
+                        <span class="status-indicator status-disconnected"></span>
+                        ANZ Bank
+                    </button>
+                    <button class="connect-btn" onclick="connectBank('westpac')">
+                        <span class="status-indicator status-disconnected"></span>
+                        Westpac
+                    </button>
+                    <button class="connect-btn" onclick="connectBank('nab')">
+                        <span class="status-indicator status-disconnected"></span>
+                        NAB
+                    </button>
+                </div>
+                
+                <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                    Connected Banks: <span id="connected-count">0</span>/4
+                </div>
+            </div>
+
+            <!-- Bank Accounts -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💳</div>
+                    <div class="card-title">Bank Accounts</div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Account</th>
+                            <th>Type</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accounts-table">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #888; padding: 30px;">
+                                Connect your banks to see accounts here
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Assets -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🏠</div>
+                    <div class="card-title">Assets</div>
+                </div>
+                <div class="input-group">
+                    <label for="asset-name">Asset Name</label>
+                    <input type="text" id="asset-name" placeholder="e.g., Family Home, Investment Property">
+                </div>
+                <div class="input-group">
+                    <label for="asset-type">Type</label>
+                    <select id="asset-type">
+                        <option value="property">Property</option>
+                        <option value="shares">Shares/Stocks</option>
+                        <option value="super">Superannuation</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="asset-value">Current Value (AUD)</label>
+                    <input type="number" id="asset-value" placeholder="500000" step="0.01">
+                </div>
+                <button class="btn btn-success" onclick="addAsset()">Add Asset</button>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-table">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #888;">No assets added yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Liabilities -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💸</div>
+                    <div class="card-title">Liabilities</div>
+                </div>
+                <div class="input-group">
+                    <label for="liability-name">Liability Name</label>
+                    <input type="text" id="liability-name" placeholder="e.g., Home Mortgage, Car Loan">
+                </div>
+                <div class="input-group">
+                    <label for="liability-type">Type</label>
+                    <select id="liability-type">
+                        <option value="mortgage">Mortgage</option>
+                        <option value="personal-loan">Personal Loan</option>
+                        <option value="car-loan">Car Loan</option>
+                        <option value="credit-card">Credit Card</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="liability-amount">Outstanding Amount (AUD)</label>
+                    <input type="number" id="liability-amount" placeholder="300000" step="0.01">
+                </div>
+                <button class="btn btn-danger" onclick="addLiability()">Add Liability</button>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Liability</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liabilities-table">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #888;">No liabilities added yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Asset Allocation Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🥧</div>
+                    <div class="card-title">Asset Allocation</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="assets-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Net Worth Trend -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📈</div>
+                    <div class="card-title">Net Worth Trend</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="networth-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Cash Flow Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💰</div>
+                    <div class="card-title">Monthly Cash Flow</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cashflow-chart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // This is JavaScript - it makes your website DO things!
-        
-        // These are like boxes where we store information
-        let incomeList = [];
-        let expenseList = [];
+        // Data Storage (In real app, this would be in a secure database)
+        let financialData = {
+            assets: [],
+            liabilities: [],
+            bankAccounts: [],
+            connectedBanks: [],
+            transactions: []
+        };
 
-        // This function adds money you EARNED
-        function addIncome() {
-            // Get what the user typed
-            const description = document.getElementById('income-description').value;
-            const amount = parseFloat(document.getElementById('income-amount').value);
-            
-            // Check if they actually typed something
-            if (!description || !amount || amount <= 0) {
-                alert('Oops! Please fill in both the description and a positive amount!');
-                return;
+        // Mock CDR API Data (In real implementation, this would come from actual banks)
+        const mockBankData = {
+            cba: {
+                name: "Commonwealth Bank",
+                accounts: [
+                    { id: "cba-1", name: "Everyday Account", type: "Transaction", balance: 5420.50 },
+                    { id: "cba-2", name: "NetBank Saver", type: "Savings", balance: 25000.00 }
+                ],
+                transactions: [
+                    { date: "2025-07-18", description: "Salary Credit", amount: 4500, type: "credit" },
+                    { date: "2025-07-17", description: "Woolworths", amount: -156.50, type: "debit" }
+                ]
+            },
+            anz: {
+                name: "ANZ Bank",
+                accounts: [
+                    { id: "anz-1", name: "Access Advantage", type: "Transaction", balance: 3200.75 },
+                    { id: "anz-2", name: "Progress Saver", type: "Savings", balance: 45000.00 }
+                ]
+            },
+            westpac: {
+                name: "Westpac",
+                accounts: [
+                    { id: "west-1", name: "Choice Account", type: "Transaction", balance: 2100.30 }
+                ]
+            },
+            nab: {
+                name: "NAB",
+                accounts: [
+                    { id: "nab-1", name: "Classic Banking", type: "Transaction", balance: 1800.20 }
+                ]
             }
+        };
 
-            // Add it to our list (like writing in a notebook)
-            incomeList.push({
-                description: description,
-                amount: amount,
-                date: new Date().toLocaleDateString()
-            });
+        // Initialize Charts
+        let assetsChart, networthChart, cashflowChart;
 
-            // Clear the input boxes
-            document.getElementById('income-description').value = '';
-            document.getElementById('income-amount').value = '';
-
-            // Update everything on the screen
-            updateDisplay();
-        }
-
-        // This function adds money you SPENT
-        function addExpense() {
-            const description = document.getElementById('expense-description').value;
-            const amount = parseFloat(document.getElementById('expense-amount').value);
+        // Connect to Bank (Mock CDR Integration)
+        async function connectBank(bankCode) {
+            const button = event.target;
+            const indicator = button.querySelector('.status-indicator');
             
-            if (!description || !amount || amount <= 0) {
-                alert('Oops! Please fill in both the description and a positive amount!');
-                return;
-            }
-
-            expenseList.push({
-                description: description,
-                amount: amount,
-                date: new Date().toLocaleDateString()
-            });
-
-            document.getElementById('expense-description').value = '';
-            document.getElementById('expense-amount').value = '';
-
-            updateDisplay();
-        }
-
-        // This function updates all the numbers on your screen
-        function updateDisplay() {
-            // Add up all your income (money coming in)
-            const totalIncome = incomeList.reduce((sum, item) => sum + item.amount, 0);
+            // Show connecting state
+            indicator.className = 'status-indicator status-pending';
+            button.textContent = button.textContent.replace('Connect', 'Connecting...');
             
-            // Add up all your expenses (money going out)
-            const totalExpenses = expenseList.reduce((sum, item) => sum + item.amount, 0);
-            
-            // Calculate how much you have left
-            const netTotal = totalIncome - totalExpenses;
-
-            // Update the numbers on screen
-            document.getElementById('total-income').textContent = '$' + totalIncome.toFixed(2);
-            document.getElementById('total-expenses').textContent = '$' + totalExpenses.toFixed(2);
-            
-            const netElement = document.getElementById('net-total');
-            netElement.textContent = '$' + netTotal.toFixed(2);
-            
-            // Change color based on if you have money left or spent too much
-            if (netTotal > 0) {
-                netElement.className = 'money-amount positive';
-            } else if (netTotal < 0) {
-                netElement.className = 'money-amount negative';
-            } else {
-                netElement.className = 'money-amount neutral';
-            }
-
-            // Show the list of all transactions
-            updateTransactionList();
-        }
-
-        // This shows all your money moves in a list
-        function updateTransactionList() {
-            const listElement = document.getElementById('transaction-list');
-            
-            // Combine income and expenses into one list
-            const allTransactions = [
-                ...incomeList.map(item => ({...item, type: 'income'})),
-                ...expenseList.map(item => ({...item, type: 'expense'}))
-            ];
-
-            // Sort by newest first
-            allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            if (allTransactions.length === 0) {
-                listElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Start adding your income and expenses above to see them here!</div>';
-                return;
-            }
-
-            // Create the HTML for each transaction
-            let html = '';
-            allTransactions.forEach(transaction => {
-                const isIncome = transaction.type === 'income';
-                const sign = isIncome ? '+' : '-';
-                const colorClass = isIncome ? 'positive' : 'negative';
+            // Simulate CDR OAuth flow (in real app, this would redirect to bank's login)
+            setTimeout(() => {
+                // Mock successful connection
+                indicator.className = 'status-indicator status-connected';
+                button.classList.add('connected');
+                button.innerHTML = `<span class="status-indicator status-connected"></span>${mockBankData[bankCode].name} ✓`;
                 
+                // Add bank to connected list
+                if (!financialData.connectedBanks.includes(bankCode)) {
+                    financialData.connectedBanks.push(bankCode);
+                    
+                    // Import bank accounts
+                    mockBankData[bankCode].accounts.forEach(account => {
+                        account.bank = bankCode;
+                        financialData.bankAccounts.push(account);
+                    });
+                    
+                    updateAllDisplays();
+                }
+                
+                // Update connected count
+                document.getElementById('connected-count').textContent = financialData.connectedBanks.length;
+                
+                // Show success message
+                alert(`✅ Successfully connected to ${mockBankData[bankCode].name}!\n\nYour account data is now being imported securely via CDR.`);
+                
+            }, 2000);
+        }
+
+        // Add Asset
+        function addAsset() {
+            const name = document.getElementById('asset-name').value;
+            const type = document.getElementById('asset-type').value;
+            const value = parseFloat(document.getElementById('asset-value').value);
+            
+            if (!name || !value || value <= 0) {
+                alert('Please fill in all asset details with a positive value');
+                return;
+            }
+
+            const asset = {
+                id: Date.now(),
+                name: name,
+                type: type,
+                value: value,
+                dateAdded: new Date().toISOString().split('T')[0]
+            };
+
+            financialData.assets.push(asset);
+            
+            // Clear form
+            document.getElementById('asset-name').value = '';
+            document.getElementById('asset-value').value = '';
+            
+            updateAllDisplays();
+        }
+
+        // Add Liability
+        function addLiability() {
+            const name = document.getElementById('liability-name').value;
+            const type = document.getElementById('liability-type').value;
+            const amount = parseFloat(document.getElementById('liability-amount').value);
+            
+            if (!name || !amount || amount <= 0) {
+                alert('Please fill in all liability details with a positive amount');
+                return;
+            }
+
+            const liability = {
+                id: Date.now(),
+                name: name,
+                type: type,
+                amount: amount,
+                dateAdded: new Date().toISOString().split('T')[0]
+            };
+
+            financialData.liabilities.push(liability);
+            
+            // Clear form
+            document.getElementById('liability-name').value = '';
+            document.getElementById('liability-amount').value = '';
+            
+            updateAllDisplays();
+        }
+
+        // Delete Item
+        function deleteItem(type, id) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                if (type === 'asset') {
+                    financialData.assets = financialData.assets.filter(item => item.id !== id);
+                } else if (type === 'liability') {
+                    financialData.liabilities = financialData.liabilities.filter(item => item.id !== id);
+                }
+                updateAllDisplays();
+            }
+        }
+
+        // Update All Displays
+        function updateAllDisplays() {
+            updateSummary();
+            updateAccountsTable();
+            updateAssetsTable();
+            updateLiabilitiesTable();
+            updateCharts();
+        }
+
+        // Update Financial Summary
+        function updateSummary() {
+            // Calculate totals
+            const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0) +
+                               financialData.bankAccounts.reduce((sum, account) => sum + account.balance, 0);
+            
+            const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
+            const netWorth = totalAssets - totalLiabilities;
+            
+            // Mock monthly cash flow calculation
+            const monthlyIncome = 4500; // This would come from transaction analysis
+            const monthlyExpenses = 3200; // This would come from transaction analysis
+            const monthlyCashflow = monthlyIncome - monthlyExpenses;
+            
+            // Update display
+            document.getElementById('total-assets').textContent = formatCurrency(totalAssets);
+            document.getElementById('total-liabilities').textContent = formatCurrency(totalLiabilities);
+            
+            const networthEl = document.getElementById('net-worth');
+            networthEl.textContent = formatCurrency(netWorth);
+            networthEl.className = netWorth >= 0 ? 'summary-value positive' : 'summary-value negative';
+            
+            const cashflowEl = document.getElementById('monthly-cashflow');
+            cashflowEl.textContent = formatCurrency(monthlyCashflow);
+            cashflowEl.className = monthlyCashflow >= 0 ? 'summary-value positive' : 'summary-value negative';
+        }
+
+        // Update Bank Accounts Table
+        function updateAccountsTable() {
+            const tbody = document.getElementById('accounts-table');
+            
+            if (financialData.bankAccounts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 30px;">Connect your banks to see accounts here</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            financialData.bankAccounts.forEach(account => {
+                const bankName = mockBankData[account.bank].name;
                 html += `
-                    <div class="transaction-item">
-                        <span>${transaction.description} (${transaction.date})</span>
-                        <span class="${colorClass}">${sign}$${transaction.amount.toFixed(2)}</span>
-                    </div>
+                    <tr>
+                        <td>${account.name}</td>
+                        <td>${account.type}</td>
+                        <td class="${account.balance >= 0 ? 'positive' : 'negative'}">${formatCurrency(account.balance)}</td>
+                        <td><span style="font-size: 0.8em; color: #666;">${bankName}</span></td>
+                    </tr>
                 `;
             });
-
-            listElement.innerHTML = html;
+            
+            tbody.innerHTML = html;
         }
 
-        // This clears everything (like erasing a whiteboard)
-        function clearAll() {
-            if (confirm('Are you sure you want to clear all your data? This cannot be undone!')) {
-                incomeList = [];
-                expenseList = [];
-                updateDisplay();
+        // Update Assets Table
+        function updateAssetsTable() {
+            const tbody = document.getElementById('assets-table');
+            
+            if (financialData.assets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">No assets added yet</td></tr>';
+                return;
             }
+            
+            let html = '';
+            financialData.assets.forEach(asset => {
+                html += `
+                    <tr>
+                        <td>${asset.name}</td>
+                        <td>${asset.type.charAt(0).toUpperCase() + asset.type.slice(1)}</td>
+                        <td class="positive">${formatCurrency(asset.value)}</td>
+                        <td><button class="btn btn-danger" onclick="deleteItem('asset', ${asset.id})" style="padding: 5px 10px; font-size: 0.8em;">Delete</button></td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
         }
-    </script>
-</body>
-</html>
+
+        // Update Liabilities Table
+        function updateLiabilitiesTable() {
+            const tbody = document.getElementById('liabilities-table');
+            
+            if (financialData.liabilities.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">No liabilities added yet</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            financialData.liabilities.forEach(liability => {
+                html += `
+                    <tr>
+                        <td>${liability.name}</td>
+                        <td>${liability.type.charAt(0).toUpperCase() + liability.type.slice(1).replace('-', ' ')}</td>
+                        <td class="negative">${formatCurrency(liability.amount)}</td>
+                        <td><button class="btn btn-danger" onclick="deleteItem('liability', ${liability.id})" style="padding: 5px 10px; font-size: 0.8em;">Delete</button></td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Update Charts
+        function updateCharts() {
+            updateAssetsChart();
+            updateNetWorthChart();
+            updateCashFlowChart();
+        }
+
+        // Asset Allocation Pie Chart
+        function updateAssetsChart() {
+            const ctx = document.getElementById('assets-chart').getContext('2d');
+            
+            if (assetsChart) {
+                assetsChart.destroy();
+            }
+            
+            // Group assets by type
+            const assetTypes = {};
+            financialData.assets.forEach(asset => {
+                if (!assetTypes[asset.type]) {
+                    assetTypes[asset.type] = 0;
+                }
+                assetTypes[asset.type] += asset.value;
+            });
+            
+            // Add bank accounts as cash
+            const totalCash = financialData.bankAccounts.reduce((sum, account) => sum + account.balance, 0);
+            if (totalCash > 0) {
+                assetTypes['cash'] = totalCash;
+            }
+            
+            const labels = Object.keys(assetTypes).map(type => type.charAt(0).toUpperCase() + type.slice(1));
+            const data = Object.values(assetTypes);
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+            
+            assetsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Net Worth Trend Line Chart
+        function updateNetWorthChart() {
+            const ctx = document.getElementById('networth-chart').getContext('2d');
+            
+            if (networthChart) {
+                networthChart.destroy();
+            }
+            
+            // Mock historical data (in real app, this would come from database)
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+            const currentNetWorth = calculateNetWorth();
+            const networthData = [
+                currentNetWorth * 0.85,
+                currentNetWorth * 0.88,
+                currentNetWorth * 0.92,
+                currentNetWorth * 0.87,
+                currentNetWorth * 0.95,
+                currentNetWorth * 0.98,
+                currentNetWorth
+            ];
+            
+            networthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Net Worth',
+                        data: networthData,
+                        borderColor: '#36A2EB',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
