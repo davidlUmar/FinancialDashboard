@@ -1,0 +1,48 @@
+<div class="dashboard-grid">
+    <div class="card">
+        <!-- Each section is a card -->
+    </div>
+</div>
+
+background: rgba(255, 255, 255, 0.1);
+backdrop-filter: blur(20px);
+border: 1px solid rgba(255, 255, 255, 0.2);
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+let financialData = {
+    assets: [
+        {id: timestamp, name: "Savings", value: 5000, type: "Cash"}
+    ],
+    liabilities: [
+        {id: timestamp, name: "Credit Card", value: 1500, type: "Credit Card"}
+    ],
+    income: [...],
+    expenses: [...]
+};
+
+function addAsset() {
+    // 1. Get input values
+    const name = document.getElementById('assetName').value;
+    const value = parseFloat(document.getElementById('assetValue').value);
+    
+    // 2. Validate inputs
+    if (name && !isNaN(value)) {
+        // 3. Add to data structure
+        financialData.assets.push({
+            id: Date.now(), // Unique timestamp ID
+            name: name,
+            value: value,
+            type: type
+        });
+        
+        // 4. Update UI
+        updateAssetsList();
+        updateSummary();
+        clearAssetInputs();
+    }
+}
