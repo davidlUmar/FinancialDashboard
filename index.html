@@ -1,48 +1,304 @@
-<div class="dashboard-grid">
-    <div class="card">
-        <!-- Each section is a card -->
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Money Dashboard</title>
+    <style>
+        /* This is CSS - it makes everything look pretty! */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
 
-background: rgba(255, 255, 255, 0.1);
-backdrop-filter: blur(20px);
-border: 1px solid rgba(255, 255, 255, 0.2);
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
 
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
-}
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-let financialData = {
-    assets: [
-        {id: timestamp, name: "Savings", value: 5000, type: "Cash"}
-    ],
-    liabilities: [
-        {id: timestamp, name: "Credit Card", value: 1500, type: "Credit Card"}
-    ],
-    income: [...],
-    expenses: [...]
-};
+        .money-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #28a745;
+        }
 
-function addAsset() {
-    // 1. Get input values
-    const name = document.getElementById('assetName').value;
-    const value = parseFloat(document.getElementById('assetValue').value);
-    
-    // 2. Validate inputs
-    if (name && !isNaN(value)) {
-        // 3. Add to data structure
-        financialData.assets.push({
-            id: Date.now(), // Unique timestamp ID
-            name: name,
-            value: value,
-            type: type
-        });
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            background: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .summary-box {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .money-amount {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+        .neutral { color: #007bff; }
+
+        .transaction-list {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .transaction-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 My Money Dashboard</h1>
         
-        // 4. Update UI
-        updateAssetsList();
-        updateSummary();
-        clearAssetInputs();
-    }
-}
+        <!-- This is where you add money coming IN (like allowance) -->
+        <div class="money-section">
+            <h2>💵 Money Coming In (Income)</h2>
+            <div class="input-group">
+                <label for="income-description">What is this money from?</label>
+                <input type="text" id="income-description" placeholder="Like: Salary, Birthday money, Side job">
+            </div>
+            <div class="input-group">
+                <label for="income-amount">How much money?</label>
+                <input type="number" id="income-amount" placeholder="100" step="0.01">
+            </div>
+            <button onclick="addIncome()">Add This Money! 💰</button>
+        </div>
+
+        <!-- This is where you add money going OUT (like buying toys) -->
+        <div class="money-section" style="border-left-color: #dc3545;">
+            <h2>💸 Money Going Out (Expenses)</h2>
+            <div class="input-group">
+                <label for="expense-description">What did you spend on?</label>
+                <input type="text" id="expense-description" placeholder="Like: Groceries, Gas, Netflix">
+            </div>
+            <div class="input-group">
+                <label for="expense-amount">How much did you spend?</label>
+                <input type="number" id="expense-amount" placeholder="50" step="0.01">
+            </div>
+            <button onclick="addExpense()" style="background: #dc3545;">Add This Expense! 💸</button>
+        </div>
+
+        <!-- This shows your money summary (like counting all your coins) -->
+        <div class="summary-box">
+            <h2>📊 Your Money Summary</h2>
+            <div>Total Money Coming In: <span id="total-income" class="money-amount positive">$0.00</span></div>
+            <div>Total Money Going Out: <span id="total-expenses" class="money-amount negative">$0.00</span></div>
+            <div>Money Left Over: <span id="net-total" class="money-amount neutral">$0.00</span></div>
+        </div>
+
+        <!-- This shows your list of all money movements -->
+        <div class="money-section">
+            <h2>📝 All Your Money Moves</h2>
+            <div class="transaction-list" id="transaction-list">
+                <div style="padding: 20px; text-align: center; color: #888;">
+                    Start adding your income and expenses above to see them here!
+                </div>
+            </div>
+            <button onclick="clearAll()" style="background: #6c757d; margin-top: 10px;">Clear Everything 🗑️</button>
+        </div>
+    </div>
+
+    <script>
+        // This is JavaScript - it makes your website DO things!
+        
+        // These are like boxes where we store information
+        let incomeList = [];
+        let expenseList = [];
+
+        // This function adds money you EARNED
+        function addIncome() {
+            // Get what the user typed
+            const description = document.getElementById('income-description').value;
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            
+            // Check if they actually typed something
+            if (!description || !amount || amount <= 0) {
+                alert('Oops! Please fill in both the description and a positive amount!');
+                return;
+            }
+
+            // Add it to our list (like writing in a notebook)
+            incomeList.push({
+                description: description,
+                amount: amount,
+                date: new Date().toLocaleDateString()
+            });
+
+            // Clear the input boxes
+            document.getElementById('income-description').value = '';
+            document.getElementById('income-amount').value = '';
+
+            // Update everything on the screen
+            updateDisplay();
+        }
+
+        // This function adds money you SPENT
+        function addExpense() {
+            const description = document.getElementById('expense-description').value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            
+            if (!description || !amount || amount <= 0) {
+                alert('Oops! Please fill in both the description and a positive amount!');
+                return;
+            }
+
+            expenseList.push({
+                description: description,
+                amount: amount,
+                date: new Date().toLocaleDateString()
+            });
+
+            document.getElementById('expense-description').value = '';
+            document.getElementById('expense-amount').value = '';
+
+            updateDisplay();
+        }
+
+        // This function updates all the numbers on your screen
+        function updateDisplay() {
+            // Add up all your income (money coming in)
+            const totalIncome = incomeList.reduce((sum, item) => sum + item.amount, 0);
+            
+            // Add up all your expenses (money going out)
+            const totalExpenses = expenseList.reduce((sum, item) => sum + item.amount, 0);
+            
+            // Calculate how much you have left
+            const netTotal = totalIncome - totalExpenses;
+
+            // Update the numbers on screen
+            document.getElementById('total-income').textContent = '$' + totalIncome.toFixed(2);
+            document.getElementById('total-expenses').textContent = '$' + totalExpenses.toFixed(2);
+            
+            const netElement = document.getElementById('net-total');
+            netElement.textContent = '$' + netTotal.toFixed(2);
+            
+            // Change color based on if you have money left or spent too much
+            if (netTotal > 0) {
+                netElement.className = 'money-amount positive';
+            } else if (netTotal < 0) {
+                netElement.className = 'money-amount negative';
+            } else {
+                netElement.className = 'money-amount neutral';
+            }
+
+            // Show the list of all transactions
+            updateTransactionList();
+        }
+
+        // This shows all your money moves in a list
+        function updateTransactionList() {
+            const listElement = document.getElementById('transaction-list');
+            
+            // Combine income and expenses into one list
+            const allTransactions = [
+                ...incomeList.map(item => ({...item, type: 'income'})),
+                ...expenseList.map(item => ({...item, type: 'expense'}))
+            ];
+
+            // Sort by newest first
+            allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (allTransactions.length === 0) {
+                listElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Start adding your income and expenses above to see them here!</div>';
+                return;
+            }
+
+            // Create the HTML for each transaction
+            let html = '';
+            allTransactions.forEach(transaction => {
+                const isIncome = transaction.type === 'income';
+                const sign = isIncome ? '+' : '-';
+                const colorClass = isIncome ? 'positive' : 'negative';
+                
+                html += `
+                    <div class="transaction-item">
+                        <span>${transaction.description} (${transaction.date})</span>
+                        <span class="${colorClass}">${sign}$${transaction.amount.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            listElement.innerHTML = html;
+        }
+
+        // This clears everything (like erasing a whiteboard)
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all your data? This cannot be undone!')) {
+                incomeList = [];
+                expenseList = [];
+                updateDisplay();
+            }
+        }
+    </script>
+</body>
+</html>
